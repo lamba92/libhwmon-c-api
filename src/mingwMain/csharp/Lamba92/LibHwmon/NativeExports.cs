@@ -217,6 +217,8 @@ public static unsafe class NativeExports
             HandleException(err, ex);
             return err != null ? err->Code : HwmonStatus.ErrorInternal;
         }
+    }
+
     // System / Environment
     [UnmanagedCallersOnly(EntryPoint = "hwmon_is_administrator")]
     [return: MarshalAs(UnmanagedType.I1)]
