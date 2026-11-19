@@ -160,9 +160,12 @@ internal class NativeHwmonHardware(
                 HWMON_HW_GPU_INTEL -> HardwareType.GPU_INTEL
                 HWMON_HW_STORAGE -> HardwareType.STORAGE
                 HWMON_HW_NETWORK -> HardwareType.NETWORK
-                HWMON_HW_CONTROLLER -> HardwareType.CONTROLLER
+                HWMON_HW_COOLER -> HardwareType.COOLER
                 HWMON_HW_BATTERY -> HardwareType.BATTERY
                 HWMON_HW_EMBEDDED_CONTROLLER -> HardwareType.EMBEDDED_CONTROLLER
+                HWMON_HW_PSU -> HardwareType.PSU
+                HWMON_HW_POWER_MONITOR -> HardwareType.POWER_MONITOR
+                HWMON_HW_CONTROLLER -> HardwareType.CONTROLLER
                 else -> HardwareType.UNKNOWN
             }
         }

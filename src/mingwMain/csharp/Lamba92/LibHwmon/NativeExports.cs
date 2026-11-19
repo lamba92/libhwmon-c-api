@@ -454,9 +454,11 @@ public static unsafe class NativeExports
                 HardwareType.GpuIntel => HwmonHardwareType.GpuIntel,
                 HardwareType.Storage => HwmonHardwareType.Storage,
                 HardwareType.Network => HwmonHardwareType.Network,
-                HardwareType.Controller => HwmonHardwareType.Controller,
+                HardwareType.Cooler => HwmonHardwareType.Cooler,
                 HardwareType.Battery => HwmonHardwareType.Battery,
                 HardwareType.EmbeddedController => HwmonHardwareType.EmbeddedController,
+                HardwareType.Psu => HwmonHardwareType.Psu,
+                HardwareType.PowerMonitor => HwmonHardwareType.PowerMonitor,
                 _ => HwmonHardwareType.Unknown
             };
             return HwmonStatus.Ok;

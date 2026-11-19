@@ -121,9 +121,12 @@ enum class HardwareType {
     GPU_INTEL,
     STORAGE,
     NETWORK,
-    CONTROLLER,
+    COOLER,
     BATTERY,
-    EMBEDDED_CONTROLLER
+    EMBEDDED_CONTROLLER,
+    PSU,
+    POWER_MONITOR,
+    CONTROLLER
 }
 
 /**

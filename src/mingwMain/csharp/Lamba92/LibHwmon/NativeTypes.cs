@@ -61,9 +61,12 @@ public enum HwmonHardwareType
     GpuIntel = 7,
     Storage = 8,
     Network = 9,
-    Controller = 10,
+    Cooler = 10,
     Battery = 11,
-    EmbeddedController = 12
+    EmbeddedController = 12,
+    Psu = 13,
+    PowerMonitor = 14,
+    Controller = 15
 }
 
 public enum HwmonSensorType
