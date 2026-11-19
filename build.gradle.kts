@@ -1,5 +1,3 @@
-import com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
@@ -76,7 +74,7 @@ kotlin {
 }
 
 mavenPublishing {
-    publishToMavenCentral(CENTRAL_PORTAL)
+    publishToMavenCentral()
     signAllPublications()
 
     coordinates(group.toString(), "libhwmon-kotlin-api", version.toString())
