@@ -1,0 +1,36 @@
+name: Build and Test libhwmon NativeAOT
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build with Gradle
+        run: ./gradlew build --stacktrace
+
+      - name: Upload Native DLL Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: libhwmon-windows-x64
+          path: build/binaries/win-x64/

@@ -1,0 +1,3 @@
+headers = libhwmon.h
+headerFilter = libhwmon.h
+package = io.github.lamba92.libhwmon.interop
