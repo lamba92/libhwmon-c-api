@@ -165,7 +165,7 @@ internal class WindowsHwmonClient(
         }
     }
 
-    private inline fun <T> searchHardwareSensor(
+    private fun <T> searchHardwareSensor(
         hw: NativeHwmonHardware,
         sensorId: SensorId,
         action: (NativeHwmonSensor) -> T
@@ -221,7 +221,5 @@ internal class WindowsHwmonClient(
             sensors = sensorDescriptors,
             subHardware = subDescriptors
         )
-    }
-
     }
 }

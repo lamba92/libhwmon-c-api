@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalForeignApi::class)
+
 package io.github.lamba92.libhwmon
 
 import kotlinx.cinterop.*

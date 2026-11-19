@@ -39,6 +39,10 @@ val publishNativeHwmonDll by tasks.registering(Exec::class) {
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
+    }
+
     mingwX64 {
         compilations.getByName("main") {
             cinterops {
