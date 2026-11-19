@@ -150,7 +150,7 @@ internal class WindowsHwmonClient(
         }
     }
 
-    private inline fun <T> findSensor(sensorId: SensorId, action: (NativeHwmonSensor) -> T): T? {
+    private fun <T> findSensor(sensorId: SensorId, action: (NativeHwmonSensor) -> T): T? {
         val hardwareList = native.getHardware()
         try {
             for (hw in hardwareList) {
