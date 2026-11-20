@@ -93,8 +93,6 @@ kotlin {
         }
     }
 
-    val nativeOperatingSystemAttribute = Attribute.of("io.github.lamba92.native.os", String::class.java)
-    val nativeArchitectureAttribute = Attribute.of("io.github.lamba92.native.arch", String::class.java)
     val nativeLinkageAttribute = Attribute.of("io.github.lamba92.native.linkage", String::class.java)
 
     val mingwX64NativeBinariesElements by configurations.consumable("mingwX64NativeBinariesElements") {
@@ -115,8 +113,6 @@ kotlin {
                     org.gradle.nativeplatform.MachineArchitecture.X86_64,
                 ),
             )
-            attribute(nativeOperatingSystemAttribute, "windows")
-            attribute(nativeArchitectureAttribute, "x64")
             attribute(nativeLinkageAttribute, "shared")
         }
     }
@@ -137,6 +133,23 @@ kotlin {
             }
         }
     }
+}
+
+val testRepoDir = layout.buildDirectory.dir("m2")
+
+publishing {
+    repositories {
+        maven {
+            name = "TestLocal"
+            url = uri(testRepoDir)
+        }
+    }
+}
+
+tasks.register("publishToTestLocal") {
+    group = "publishing"
+    description = "Publishes all publications to build/m2 for inspection"
+    dependsOn("publishAllPublicationsToTestLocalRepository")
 }
 
 mavenPublishing {
