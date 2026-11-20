@@ -88,6 +88,39 @@ kotlin {
             implementation(kotlin("test"))
         }
     }
+
+    val nativeBinaryTypeAttribute = Attribute.of("io.github.lamba92.native.binary.type", String::class.java)
+
+    val mingwX64NativeBinariesElements by configurations.consumable("mingwX64NativeBinariesElements") {
+        attributes {
+            attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class.java, Category.LIBRARY))
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, "native-binary"))
+            attribute(
+                org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.attribute,
+                org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.native,
+            )
+            attribute(Attribute.of("org.jetbrains.kotlin.native.target", String::class.java), "mingw_x64")
+            attribute(nativeBinaryTypeAttribute, "win-x64-binaries")
+        }
+    }
+
+    artifacts {
+        add(mingwX64NativeBinariesElements.name, nativeBinariesDir.map { it.file("libhwmon.dll") }) {
+            builtBy(publishNativeHwmonLib)
+        }
+        add(mingwX64NativeBinariesElements.name, libFile) {
+            builtBy(publishNativeHwmonLib)
+        }
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+    publishing {
+        adhocSoftwareComponent {
+            addVariantsFromConfiguration(mingwX64NativeBinariesElements) {
+                mapToMavenScope("runtime")
+            }
+        }
+    }
 }
 
 mavenPublishing {
