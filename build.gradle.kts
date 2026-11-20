@@ -10,7 +10,10 @@ plugins {
 }
 
 group = "io.github.lamba92.libhwmon"
-version = "0.1.0-SNAPSHOT"
+version =
+    System.getenv("RELEASE_VERSION")
+        ?: System.getenv("GITHUB_REF_NAME")?.removePrefix("v")
+        ?: "1.0.0-SNAPSHOT"
 
 val nativeBinariesDir = layout.buildDirectory.dir("binaries/win-x64")
 val libFile = nativeBinariesDir.map { it.file("libhwmon.lib") }
@@ -100,17 +103,17 @@ kotlin {
             attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class.java, Category.LIBRARY))
             attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, "native-binary"))
             attribute(
-                org.gradle.nativeplatform.OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE,
+                OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE,
                 objects.named(
-                    org.gradle.nativeplatform.OperatingSystemFamily::class.java,
-                    org.gradle.nativeplatform.OperatingSystemFamily.WINDOWS,
+                    OperatingSystemFamily::class.java,
+                    OperatingSystemFamily.WINDOWS,
                 ),
             )
             attribute(
-                org.gradle.nativeplatform.MachineArchitecture.ARCHITECTURE_ATTRIBUTE,
+                MachineArchitecture.ARCHITECTURE_ATTRIBUTE,
                 objects.named(
-                    org.gradle.nativeplatform.MachineArchitecture::class.java,
-                    org.gradle.nativeplatform.MachineArchitecture.X86_64,
+                    MachineArchitecture::class.java,
+                    MachineArchitecture.X86_64,
                 ),
             )
             attribute(nativeLinkageAttribute, "shared")
