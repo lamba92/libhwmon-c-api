@@ -1,3 +1,7 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
@@ -89,18 +93,31 @@ kotlin {
         }
     }
 
-    val nativeBinaryTypeAttribute = Attribute.of("io.github.lamba92.native.binary.type", String::class.java)
+    val nativeOperatingSystemAttribute = Attribute.of("io.github.lamba92.native.os", String::class.java)
+    val nativeArchitectureAttribute = Attribute.of("io.github.lamba92.native.arch", String::class.java)
+    val nativeLinkageAttribute = Attribute.of("io.github.lamba92.native.linkage", String::class.java)
 
     val mingwX64NativeBinariesElements by configurations.consumable("mingwX64NativeBinariesElements") {
         attributes {
             attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class.java, Category.LIBRARY))
             attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, "native-binary"))
             attribute(
-                org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.attribute,
-                org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.native,
+                org.gradle.nativeplatform.OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE,
+                objects.named(
+                    org.gradle.nativeplatform.OperatingSystemFamily::class.java,
+                    org.gradle.nativeplatform.OperatingSystemFamily.WINDOWS,
+                ),
             )
-            attribute(Attribute.of("org.jetbrains.kotlin.native.target", String::class.java), "mingw_x64")
-            attribute(nativeBinaryTypeAttribute, "win-x64-binaries")
+            attribute(
+                org.gradle.nativeplatform.MachineArchitecture.ARCHITECTURE_ATTRIBUTE,
+                objects.named(
+                    org.gradle.nativeplatform.MachineArchitecture::class.java,
+                    org.gradle.nativeplatform.MachineArchitecture.X86_64,
+                ),
+            )
+            attribute(nativeOperatingSystemAttribute, "windows")
+            attribute(nativeArchitectureAttribute, "x64")
+            attribute(nativeLinkageAttribute, "shared")
         }
     }
 
@@ -113,7 +130,6 @@ kotlin {
         }
     }
 
-    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
     publishing {
         adhocSoftwareComponent {
             addVariantsFromConfiguration(mingwX64NativeBinariesElements) {
