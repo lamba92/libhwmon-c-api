@@ -34,12 +34,11 @@ import kotlin.time.Duration.Companion.seconds
  * ```
  */
 interface HwmonClient : AutoCloseable {
-
     /**
      * Inspects the connected PC hardware topology and returns a hierarchical tree of
      * [HardwareDescriptor]s and [SensorDescriptor]s.
      *
-     * Hardware topology discovery is performed once and cached internally.
+     * Hardware topology discovery is performed dynamically on each invocation.
      *
      * @return A list of all detected top-level hardware components and their attached sensors.
      * @throws HwmonUnauthorizedException If the current process lacks required Administrator privileges.
@@ -85,7 +84,10 @@ interface HwmonClient : AutoCloseable {
      * @throws HwmonInvalidArgumentException If [percent] is outside the supported software limits.
      * @throws HwmonUnauthorizedException If the current process lacks Administrator privileges.
      */
-    suspend fun setControlSoftware(sensorId: SensorId, percent: Float)
+    suspend fun setControlSoftware(
+        sensorId: SensorId,
+        percent: Float,
+    )
 
     /**
      * Restores a software-controlled fan or pump sensor back to its default hardware/BIOS
@@ -119,7 +121,6 @@ interface HwmonClient : AutoCloseable {
          * @return A configured [HwmonClient] instance.
          * @throws HwmonUnauthorizedException If the current process lacks Administrator privileges.
          */
-        operator fun invoke(config: HwmonConfig = HwmonConfig()): HwmonClient =
-            WindowsHwmonClient(config)
+        operator fun invoke(config: HwmonConfig = HwmonConfig()): HwmonClient = WindowsHwmonClient(config)
     }
 }

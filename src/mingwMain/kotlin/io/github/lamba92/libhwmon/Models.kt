@@ -21,7 +21,7 @@ enum class HwmonErrorCode {
     NOT_SUPPORTED,
 
     /** An unexpected internal error occurred within LibreHardwareMonitor or the native bridge. */
-    INTERNAL
+    INTERNAL,
 }
 
 /**
@@ -34,29 +34,37 @@ enum class HwmonErrorCode {
 open class HwmonException(
     val code: HwmonErrorCode,
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : RuntimeException("[$code] $message", cause)
 
 /**
  * Thrown when the current process lacks required Administrator privileges to communicate with
  * ring-0 kernel drivers (such as WinRing0 or PawnIO).
  */
-class HwmonUnauthorizedException(message: String) : HwmonException(HwmonErrorCode.UNAUTHORIZED, message)
+class HwmonUnauthorizedException(
+    message: String,
+) : HwmonException(HwmonErrorCode.UNAUTHORIZED, message)
 
 /**
  * Thrown when a requested hardware device or sensor identifier cannot be located.
  */
-class HwmonNotFoundException(message: String) : HwmonException(HwmonErrorCode.NOT_FOUND, message)
+class HwmonNotFoundException(
+    message: String,
+) : HwmonException(HwmonErrorCode.NOT_FOUND, message)
 
 /**
  * Thrown when an invalid argument or value is supplied to an API call.
  */
-class HwmonInvalidArgumentException(message: String) : HwmonException(HwmonErrorCode.INVALID_ARGUMENT, message)
+class HwmonInvalidArgumentException(
+    message: String,
+) : HwmonException(HwmonErrorCode.INVALID_ARGUMENT, message)
 
 /**
  * Thrown when attempting an unsupported operation on a sensor (e.g. software duty control on a read-only fan).
  */
-class HwmonNotSupportedException(message: String) : HwmonException(HwmonErrorCode.NOT_SUPPORTED, message)
+class HwmonNotSupportedException(
+    message: String,
+) : HwmonException(HwmonErrorCode.NOT_SUPPORTED, message)
 
 /**
  * Type-safe value class representing a unique hardware device identifier (e.g. `/amdcpu/0`, `/gpu-nvidia/0`).
@@ -67,7 +75,9 @@ class HwmonNotSupportedException(message: String) : HwmonException(HwmonErrorCod
  */
 @Serializable
 @JvmInline
-value class HardwareId(val value: String) {
+value class HardwareId(
+    val value: String,
+) {
     init {
         require(value.isNotBlank()) { "HardwareId cannot be blank" }
     }
@@ -91,7 +101,9 @@ value class HardwareId(val value: String) {
  */
 @Serializable
 @JvmInline
-value class SensorId(val value: String) {
+value class SensorId(
+    val value: String,
+) {
     init {
         require(value.isNotBlank()) { "SensorId cannot be blank" }
     }
@@ -126,7 +138,7 @@ enum class HardwareType {
     EMBEDDED_CONTROLLER,
     PSU,
     POWER_MONITOR,
-    CONTROLLER
+    CONTROLLER,
 }
 
 /**
@@ -151,7 +163,7 @@ enum class SensorType {
     TIME_SPAN,
     ENERGY,
     NOISE,
-    HUMIDITY
+    HUMIDITY,
 }
 
 /**
@@ -166,7 +178,7 @@ enum class ControlMode {
     DEFAULT,
 
     /** The sensor is locked to a fixed software duty cycle override. */
-    SOFTWARE
+    SOFTWARE,
 }
 
 /**

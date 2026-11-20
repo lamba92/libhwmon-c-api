@@ -16,7 +16,7 @@ Provides a strongly-typed, coroutine-first Kotlin API for reading PC hardware se
 
 ## Architecture
 
-- **`LibHwmon.csproj`**: Compiles C# + LibreHardwareMonitor to a native shared library (`libhwmon.dll` / `libhwmon.lib`) via .NET NativeAOT.
+- **`LibHwmon.csproj`**: Compiles C# + LibreHardwareMonitor to a native static library (`libhwmon.lib`) via .NET NativeAOT.
 - **`src/mingwMain/csharp/Lamba92/LibHwmon/`**: C# exports tagged with `[UnmanagedCallersOnly]`.
 - **`src/nativeInterop/cinterop/`**: C ABI header (`libhwmon.h`) and `cinterop` definition (`libhwmon.def`).
 - **`src/mingwMain/kotlin/io/github/lamba92/libhwmon/`**:

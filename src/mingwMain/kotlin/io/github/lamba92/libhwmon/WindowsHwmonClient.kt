@@ -1,12 +1,16 @@
 package io.github.lamba92.libhwmon
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration
-
 
 /**
  * Windows-specific implementation of [HwmonClient] backed by LibreHardwareMonitor NativeAOT.
@@ -14,11 +18,9 @@ import kotlin.time.Duration
  * Enforces Administrator elevation upon instantiation and serializes all unmanaged invocations
  * through a shared mutex on a dedicated OS thread.
  */
-@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 internal class WindowsHwmonClient(
-    config: HwmonConfig = HwmonConfig()
+    config: HwmonConfig = HwmonConfig(),
 ) : HwmonClient {
-
     companion object {
         /** Process-wide mutex guaranteeing that only one coroutine interacts with ring-0 hardware drivers at a time. */
         private val globalMutex = Mutex()
@@ -30,82 +32,81 @@ internal class WindowsHwmonClient(
     init {
         if (!isAdministrator()) {
             throw HwmonUnauthorizedException(
-                "LibreHardwareMonitor requires Administrator privileges to access ring-0 kernel drivers (WinRing0/PawnIO) and hardware sensors."
+                "LibreHardwareMonitor requires Administrator privileges to access ring-0 kernel drivers (WinRing0/PawnIO) and hardware sensors.",
             )
         }
     }
 
     private val native = NativeHwmonComputer(config)
     private val controlledSensors = mutableSetOf<SensorId>()
-    private var cachedHardwareTree: List<HardwareDescriptor>? = null
 
-    override suspend fun getHardwareTree(): List<HardwareDescriptor> = withContext(hwmonDispatcher) {
-        globalMutex.withLock {
-            cachedHardwareTree?.let { return@withLock it }
-            native.update()
-            val list = mutableListOf<HardwareDescriptor>()
-            for (hw in native.getHardware()) {
-                list.add(readHardwareDescriptor(hw))
-                hw.close()
-            }
-            cachedHardwareTree = list
-            list
+    private fun queryHardwareTree(): List<HardwareDescriptor> {
+        native.update()
+        val list = mutableListOf<HardwareDescriptor>()
+        for (hw in native.getHardware()) {
+            list.add(readHardwareDescriptor(hw))
+            hw.close()
         }
+        return list
     }
 
-    override suspend fun sampleTelemetry(): TelemetrySnapshot = withContext(hwmonDispatcher) {
-        globalMutex.withLock {
-            val tree = cachedHardwareTree ?: run {
-                native.update()
-                val list = mutableListOf<HardwareDescriptor>()
-                for (hw in native.getHardware()) {
-                    list.add(readHardwareDescriptor(hw))
-                    hw.close()
-                }
-                cachedHardwareTree = list
-                list
+    override suspend fun getHardwareTree(): List<HardwareDescriptor> =
+        withContext(hwmonDispatcher) {
+            globalMutex.withLock {
+                queryHardwareTree()
             }
+        }
 
-            // Single high-performance C-call batch update
-            val batchRecords = native.getTelemetryBatch(maxRecords = 2048)
-            val recordMap = batchRecords.associateBy { it.sensorId }
+    override suspend fun sampleTelemetry(): TelemetrySnapshot =
+        withContext(hwmonDispatcher) {
+            globalMutex.withLock {
+                val tree = queryHardwareTree()
 
-            fun buildReading(desc: HardwareDescriptor): HardwareReading {
-                val sensorReadings = desc.sensors.map { sDesc ->
-                    val rec = recordMap[sDesc.id]
-                    SensorReading(
-                        id = sDesc.id,
-                        name = sDesc.name,
-                        type = sDesc.type,
-                        value = rec?.value,
-                        min = rec?.min,
-                        max = rec?.max,
-                        controlMode = rec?.controlMode ?: ControlMode.UNDEFINED,
-                        controlSoftwareValue = rec?.controlSoftwareValue
+                // Single high-performance C-call batch update
+                val batchRecords = native.getTelemetryBatch(maxRecords = 2048)
+                val recordMap = batchRecords.associateBy { it.sensorId }
+
+                fun buildReading(desc: HardwareDescriptor): HardwareReading {
+                    val sensorReadings =
+                        desc.sensors.map { sDesc ->
+                            val rec = recordMap[sDesc.id]
+                            SensorReading(
+                                id = sDesc.id,
+                                name = sDesc.name,
+                                type = sDesc.type,
+                                value = rec?.value,
+                                min = rec?.min,
+                                max = rec?.max,
+                                controlMode = rec?.controlMode ?: ControlMode.UNDEFINED,
+                                controlSoftwareValue = rec?.controlSoftwareValue,
+                            )
+                        }
+                    val subReadings = desc.subHardware.map { buildReading(it) }
+                    return HardwareReading(
+                        id = desc.id,
+                        name = desc.name,
+                        type = desc.type,
+                        sensors = sensorReadings,
+                        subHardware = subReadings,
                     )
                 }
-                val subReadings = desc.subHardware.map { buildReading(it) }
-                return HardwareReading(
-                    id = desc.id,
-                    name = desc.name,
-                    type = desc.type,
-                    sensors = sensorReadings,
-                    subHardware = subReadings
-                )
+
+                TelemetrySnapshot(tree.map { buildReading(it) })
             }
-
-            TelemetrySnapshot(tree.map { buildReading(it) })
         }
-    }
 
-    override fun telemetryFlow(interval: Duration): Flow<TelemetrySnapshot> = flow {
-        while (currentCoroutineContext().isActive) {
-            emit(sampleTelemetry())
-            delay(interval)
+    override fun telemetryFlow(interval: Duration): Flow<TelemetrySnapshot> =
+        flow {
+            while (currentCoroutineContext().isActive) {
+                emit(sampleTelemetry())
+                delay(interval)
+            }
         }
-    }
 
-    override suspend fun setControlSoftware(sensorId: SensorId, percent: Float): Unit =
+    override suspend fun setControlSoftware(
+        sensorId: SensorId,
+        percent: Float,
+    ): Unit =
         withContext(hwmonDispatcher) {
             globalMutex.withLock {
                 findSensor(sensorId) { sensor ->
@@ -150,7 +151,10 @@ internal class WindowsHwmonClient(
         }
     }
 
-    private fun <T> findSensor(sensorId: SensorId, action: (NativeHwmonSensor) -> T): T? {
+    private fun <T> findSensor(
+        sensorId: SensorId,
+        action: (NativeHwmonSensor) -> T,
+    ): T? {
         val hardwareList = native.getHardware()
         try {
             for (hw in hardwareList) {
@@ -168,7 +172,7 @@ internal class WindowsHwmonClient(
     private fun <T> searchHardwareSensor(
         hw: NativeHwmonHardware,
         sensorId: SensorId,
-        action: (NativeHwmonSensor) -> T
+        action: (NativeHwmonSensor) -> T,
     ): T? {
         val sensors = hw.getSensors()
         try {
@@ -199,27 +203,29 @@ internal class WindowsHwmonClient(
 
     private fun readHardwareDescriptor(hw: NativeHwmonHardware): HardwareDescriptor {
         val sensors = hw.getSensors()
-        val sensorDescriptors = sensors.map { s ->
-            SensorDescriptor(
-                id = s.id,
-                name = s.name,
-                index = s.index,
-                type = s.type,
-                hasControl = s.hasControl
-            ).also { s.close() }
-        }
+        val sensorDescriptors =
+            sensors.map { s ->
+                SensorDescriptor(
+                    id = s.id,
+                    name = s.name,
+                    index = s.index,
+                    type = s.type,
+                    hasControl = s.hasControl,
+                ).also { s.close() }
+            }
 
         val subList = hw.getSubHardware()
-        val subDescriptors = subList.map { sub ->
-            readHardwareDescriptor(sub).also { sub.close() }
-        }
+        val subDescriptors =
+            subList.map { sub ->
+                readHardwareDescriptor(sub).also { sub.close() }
+            }
 
         return HardwareDescriptor(
             id = hw.id,
             name = hw.name,
             type = hw.type,
             sensors = sensorDescriptors,
-            subHardware = subDescriptors
+            subHardware = subDescriptors,
         )
     }
 }

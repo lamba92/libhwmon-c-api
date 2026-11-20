@@ -7,3 +7,5 @@ out/
 .gradle/
 .kotlin/
 skills/
+obj/
+bin/
